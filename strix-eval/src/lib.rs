@@ -14,32 +14,26 @@ pub fn eval_static(game: &Game, color: &Color) -> Eval {
 pub fn alpha_beta(
     game: &mut Game,
     depth: &u8,
-    alpha: &mut i64,
-    beta: &mut i64,
-    color: &Color,
+    alpha: i64,
+    beta: i64,
+    color: Color,
 ) -> AlphaBetaResult {
-    let mut our_alpha = *alpha;
-    let mut our_beta = *beta;
+    let mut our_alpha = alpha;
+    let mut our_beta = beta;
 
     if *depth == 0 || node_is_terminal(game) {
-        return (eval_static(game, color), None);
+        return (eval_static(game, &color), None);
     }
 
     let mut best_move: Option<ChessMove> = None;
 
-    if *color == Color::White {
+    if color == Color::White {
         let mut value = -i64::MAX;
         for mv in MoveGen::new_legal(&game.current_position()) {
             let mut new_game = game.clone();
             new_game.make_move(mv);
 
-            let (eval, _) = alpha_beta(
-                &mut new_game,
-                &(depth - 1),
-                &mut our_alpha,
-                &mut our_beta,
-                &!color.to_owned(),
-            );
+            let (eval, _) = alpha_beta(&mut new_game, &(depth - 1), our_alpha, our_beta, !color);
 
             if eval > value {
                 value = eval;
@@ -59,13 +53,7 @@ pub fn alpha_beta(
             let mut new_game = game.clone();
             new_game.make_move(mv);
 
-            let (eval, _) = alpha_beta(
-                &mut new_game,
-                &(depth - 1),
-                &mut our_alpha,
-                &mut our_beta,
-                &!color.to_owned(),
-            );
+            let (eval, _) = alpha_beta(&mut new_game, &(depth - 1), our_alpha, our_beta, !color);
 
             if eval < value {
                 value = eval;
