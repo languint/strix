@@ -1,10 +1,20 @@
-use chess::{ChessMove, Color, Game, MoveGen};
+use chess::{ChessMove, Color, Game, MoveGen, Piece};
 
-pub type Eval = i64;
+use crate::state::get_materials;
+
+pub type Eval = i32;
 pub type AlphaBetaResult = (Eval, Option<ChessMove>);
 
 pub fn eval_static(game: &Game, color: &Color) -> Eval {
-    0
+    let (white_material, black_material) = get_materials(&game.current_position());
+
+    let mut eval = white_material - black_material;
+
+    if color == &Color::Black {
+        eval = -eval;
+    }
+
+    eval
 }
 
 // Alpha-beta search.
@@ -12,8 +22,8 @@ pub fn eval_static(game: &Game, color: &Color) -> Eval {
 pub fn alpha_beta(
     game: &mut Game,
     depth: &u8,
-    alpha: i64,
-    beta: i64,
+    alpha: i32,
+    beta: i32,
     color: Color,
 ) -> AlphaBetaResult {
     let mut our_alpha = alpha;
@@ -26,7 +36,7 @@ pub fn alpha_beta(
     let mut best_move: Option<ChessMove> = None;
 
     if color == Color::White {
-        let mut value = -i64::MAX;
+        let mut value = -i32::MAX;
         for mv in MoveGen::new_legal(&game.current_position()) {
             let mut new_game = game.clone();
             new_game.make_move(mv);
@@ -46,7 +56,7 @@ pub fn alpha_beta(
 
         (value, best_move)
     } else {
-        let mut value = i64::MAX;
+        let mut value = i32::MAX;
         for mv in MoveGen::new_legal(&game.current_position()) {
             let mut new_game = game.clone();
             new_game.make_move(mv);
@@ -68,6 +78,20 @@ pub fn alpha_beta(
     }
 }
 
+#[inline]
 pub fn node_is_terminal(game: &Game) -> bool {
     game.result().is_some()
+}
+
+// Returns the value of a piece in centipawns
+#[inline]
+pub fn get_piece_value(p: Piece) -> i32 {
+    match p {
+        Piece::Pawn => 100,
+        Piece::Knight => 300,
+        Piece::Bishop => 300,
+        Piece::Rook => 500,
+        Piece::Queen => 900,
+        Piece::King => 0,
+    }
 }
